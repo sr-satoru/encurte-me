@@ -12,7 +12,6 @@ export default function AddUrlModal({ onClose, onSubmit }: AddUrlModalProps) {
     const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
-        // Prevent body scroll when modal is open
         document.body.style.overflow = 'hidden'
         return () => {
             document.body.style.overflow = 'unset'
@@ -23,8 +22,7 @@ export default function AddUrlModal({ onClose, onSubmit }: AddUrlModalProps) {
         e.preventDefault()
         setIsLoading(true)
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 800))
+        await new Promise(resolve => setTimeout(resolve, 500))
 
         onSubmit(name, url)
         setIsLoading(false)
@@ -40,13 +38,15 @@ export default function AddUrlModal({ onClose, onSubmit }: AddUrlModalProps) {
         <div className="modal-overlay" onClick={handleBackdropClick}>
             <div className="modal-content">
                 <div className="modal-header">
-                    <h2 className="modal-title">Adicionar Novo Link</h2>
+                    <h2 className="modal-title">Criar Novo Link</h2>
                     <button
                         className="modal-close"
                         onClick={onClose}
                         type="button"
                     >
-                        ✕
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                     </button>
                 </div>
 
@@ -72,7 +72,7 @@ export default function AddUrlModal({ onClose, onSubmit }: AddUrlModalProps) {
 
                     <div className="form-group">
                         <label htmlFor="url-link" className="form-label">
-                            URL Completa
+                            URL de Destino
                         </label>
                         <input
                             id="url-link"
@@ -84,7 +84,7 @@ export default function AddUrlModal({ onClose, onSubmit }: AddUrlModalProps) {
                             required
                         />
                         <span className="form-hint">
-                            O link completo que você deseja encurtar
+                            O endereço completo para onde o link irá redirecionar
                         </span>
                     </div>
 
