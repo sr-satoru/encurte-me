@@ -1,0 +1,18 @@
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+    background: var(--color-background);
+}
+
+.app-content {
+    flex: 1;
+    margin-left: 280px;
+    transition: margin-left var(--transition-base);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .app-content {
+        margin-left: 0;
+    }
+}
