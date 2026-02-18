@@ -113,13 +113,18 @@ Se você não solicitou a redefinição de senha, ignore este email.
     msg.attach(MIMEText(html_content, "html"))
     
     try:
+        # Detectar se deve usar SSL direto (465) ou STARTTLS (587 ou outras)
+        use_ssl = (SMTP_PORT == 465)
+        use_starttls = not use_ssl
+
         await aiosmtplib.send(
             msg,
             hostname=SMTP_HOST,
             port=SMTP_PORT,
             username=SMTP_USER,
             password=SMTP_PASS,
-            start_tls=True,
+            use_tls=use_ssl,
+            start_tls=use_starttls,
         )
         return True
     except Exception as e:
