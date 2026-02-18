@@ -147,6 +147,47 @@ async def read_users_me(email: str = Depends(get_current_user_email), db: Prisma
 async def health_check():
     return {"status": "ok"}
 
+
+class DeleteAccountRequest(BaseModel):
+    confirmation: str
+
+
+@app.delete("/delete-account")
+async def delete_account(
+    data: DeleteAccountRequest,
+    response: Response,
+    email: str = Depends(get_current_user_email),
+    db: Prisma = Depends(get_db),
+):
+    """
+    Deleta a conta do usuário e todos os seus links.
+    Exige que o campo 'confirmation' seja exatamente 'apagar'.
+    """
+    if data.confirmation.strip().lower() != "apagar":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Confirmação inválida. Digite 'apagar' para confirmar.",
+        )
+    
+    # 1. Buscar todos os links do usuário
+    urls = await db.shortenedurl.find_many(where={"user_email": email})
+    
+    # 2. Limpar cache Redis de cada link
+    from src.redis_service import invalidate_url
+    for url in urls:
+        await invalidate_url(url.short_code)
+    
+    # 3. Deletar todos os links do banco
+    await db.shortenedurl.delete_many(where={"user_email": email})
+    
+    # 4. Deletar a conta do usuário
+    await db.user.delete(where={"email": email})
+    
+    # 5. Limpar cookie de autenticação
+    clear_auth_cookie(response)
+    
+    return {"message": "Conta deletada com sucesso"}
+
 # --- Rota de Redirecionamento (DEVE ser a ÚLTIMA rota) ---
 # Esta rota captura /{short_code} — por isso precisa vir depois de todas as outras
 

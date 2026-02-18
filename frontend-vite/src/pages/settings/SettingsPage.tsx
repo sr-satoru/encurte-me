@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
+import ConfirmDeleteModal from '../../components/ConfirmDeleteModal'
 import './SettingsPage.css'
 
 export default function SettingsPage() {
-    const { user, changePassword } = useAuth()
+    const { user, changePassword, deleteAccount } = useAuth()
+    const navigate = useNavigate()
     const [name, setName] = useState(user?.name || '')
     const [email, setEmail] = useState(user?.email || '')
     const [currentPassword, setCurrentPassword] = useState('')
@@ -16,6 +19,7 @@ export default function SettingsPage() {
     const [isPasswordLoading, setIsPasswordLoading] = useState(false)
     const [notifications, setNotifications] = useState(true)
     const [emailNotifications, setEmailNotifications] = useState(false)
+    const [showDeleteModal, setShowDeleteModal] = useState(false)
 
     useEffect(() => {
         if (user) {
@@ -281,13 +285,28 @@ export default function SettingsPage() {
 
                     <div className="card-body">
                         <div className="danger-actions">
-                            <button className="btn btn-danger">
+                            <p className="danger-text">Ao deletar sua conta, todos os seus links encurtados serão apagados permanentemente.</p>
+                            <button className="btn btn-danger" onClick={() => setShowDeleteModal(true)}>
                                 Deletar Conta
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <ConfirmDeleteModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={async () => {
+                    try {
+                        await deleteAccount('apagar')
+                        toast.success('Conta deletada com sucesso.')
+                        navigate('/auth/login', { replace: true })
+                    } catch (err: any) {
+                        toast.error(err.message || 'Erro ao deletar conta')
+                    }
+                }}
+            />
         </div>
     )
 }

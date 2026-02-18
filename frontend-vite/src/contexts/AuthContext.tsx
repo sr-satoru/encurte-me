@@ -14,6 +14,7 @@ interface AuthContextType {
     register: (email: string, password: string, name?: string, captchaToken?: string) => Promise<void>;
     logout: () => Promise<void>;
     changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+    deleteAccount: (confirmation: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -65,6 +66,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
     };
 
+    const deleteAccount = async (confirmation: string) => {
+        await apiFetch('/delete-account', {
+            method: 'DELETE',
+            body: JSON.stringify({ confirmation }),
+        });
+        setUser(null);
+    };
+
     return (
         <AuthContext.Provider
             value={{
@@ -75,6 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 register,
                 logout,
                 changePassword,
+                deleteAccount,
             }}
         >
             {children}
