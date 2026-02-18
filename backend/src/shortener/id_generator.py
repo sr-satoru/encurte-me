@@ -19,9 +19,8 @@ import os
 import hmac
 import hashlib
 from hashids import Hashids
-from dotenv import load_dotenv
+import src.config  # noqa: F401 — carrega .env da raiz
 
-load_dotenv()
 
 # Configuração do HashID
 HASHID_SALT = os.getenv("HASHID_SALT", "default-insecure-salt-change-me")

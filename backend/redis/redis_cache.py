@@ -1,8 +1,11 @@
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# Carregar .env da raiz do projeto (redis/ → backend/ → raiz)
+_ROOT_ENV = Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(_ROOT_ENV)
 
 # Referência para get_redis — será atribuída pelo bridge (redis_service.py)
 _get_redis_fn = None

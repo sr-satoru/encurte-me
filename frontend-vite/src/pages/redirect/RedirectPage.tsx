@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { apiFetch } from '@/api/auth'
 
@@ -6,9 +6,11 @@ export default function RedirectPage() {
     const { shortCode } = useParams<{ shortCode: string }>()
     const navigate = useNavigate()
     const [error, setError] = useState(false)
+    const fetchedRef = useRef(false)
 
     useEffect(() => {
-        if (!shortCode) return
+        if (!shortCode || fetchedRef.current) return
+        fetchedRef.current = true
 
         apiFetch(`/api/urls/resolve/${shortCode}`)
             .then((data) => {

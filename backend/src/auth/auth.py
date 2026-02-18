@@ -3,9 +3,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from fastapi import Request, HTTPException, status, Response
-from dotenv import load_dotenv
+import src.config  # noqa: F401 — carrega .env da raiz
 
-load_dotenv()
 
 # Configuration
 JWT_SECRET = os.getenv("JWT_SECRET", "super-secret-key")

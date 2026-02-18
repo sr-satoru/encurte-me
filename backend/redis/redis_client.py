@@ -10,9 +10,12 @@ para evitar conflito com o pacote pip 'redis'.
 
 import os
 import redis.asyncio as aioredis
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# Carregar .env da raiz do projeto (redis/ → backend/ → raiz)
+_ROOT_ENV = Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(_ROOT_ENV)
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 

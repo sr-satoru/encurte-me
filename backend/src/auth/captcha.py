@@ -14,9 +14,8 @@ Uso:
 """
 
 import os
-from dotenv import load_dotenv
+import src.config  # noqa: F401 — carrega .env da raiz
 
-load_dotenv()
 
 # Detectar provider baseado nas env vars
 _TURNSTILE_KEY = os.getenv("TURNSTILE_SECRET_KEY", "")
