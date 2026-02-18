@@ -10,17 +10,13 @@ export default function RedirectPage() {
     useEffect(() => {
         if (!shortCode) return
 
-        const resolve = async () => {
-            try {
-                const data = await apiFetch(`/api/urls/resolve/${shortCode}`)
-                // Redirecionar para a URL original
+        apiFetch(`/api/urls/resolve/${shortCode}`)
+            .then((data) => {
                 window.location.replace(data.original_url)
-            } catch {
+            })
+            .catch(() => {
                 setError(true)
-            }
-        }
-
-        resolve()
+            })
     }, [shortCode])
 
     if (error) {
@@ -31,18 +27,18 @@ export default function RedirectPage() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 minHeight: '100vh',
-                background: 'var(--color-background)',
-                color: 'var(--color-text-primary)',
+                background: '#0a0a0a',
+                color: '#fff',
                 gap: '1rem',
             }}>
                 <h1 style={{ fontSize: '3rem', fontWeight: 700 }}>404</h1>
-                <p style={{ color: 'var(--color-text-muted)' }}>Link não encontrado</p>
+                <p style={{ color: '#888' }}>Link não encontrado</p>
                 <button
                     onClick={() => navigate('/launches')}
                     style={{
                         marginTop: '1rem',
                         padding: '0.75rem 1.5rem',
-                        background: 'var(--color-primary)',
+                        background: '#4f46e5',
                         color: 'white',
                         border: 'none',
                         borderRadius: '8px',
@@ -57,25 +53,6 @@ export default function RedirectPage() {
         )
     }
 
-    return (
-        <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '100vh',
-            background: 'var(--color-background)',
-            color: 'var(--color-text-muted)',
-            gap: '0.75rem',
-        }}>
-            <div className="spinner" style={{
-                width: 24,
-                height: 24,
-                border: '3px solid var(--color-border)',
-                borderTopColor: 'var(--color-primary)',
-                borderRadius: '50%',
-                animation: 'spin 0.6s linear infinite',
-            }}></div>
-            Redirecionando...
-        </div>
-    )
+    // Sem spinner, sem animação — tela vazia até o redirect acontecer
+    return null
 }

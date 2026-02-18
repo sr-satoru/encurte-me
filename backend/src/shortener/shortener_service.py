@@ -74,32 +74,22 @@ async def resolve_short_url(short_code: str, db: Prisma) -> str | None:
     """
     Resolve um short_code para a URL original.
     
-    Fluxo:
-    1. Busca no Redis cache (rápido, sem I/O com banco)
-    2. Se cache miss → busca no banco → popula cache
-    3. Incrementa contador de cliques no Redis
+    Fluxo otimizado (Redis-only, sem consulta ao banco):
+    1. Busca no Redis cache
+    2. Incrementa cliques em background (não bloqueia o redirect)
     
     Returns:
         URL original ou None se não encontrado
     """
-    # 1. Tentar cache Redis primeiro
+    # Redis-only lookup (sem fallback ao banco)
     original_url = await get_cached_url(short_code)
     
     if original_url is None:
-        # 2. Cache miss — buscar no banco
-        url_record = await db.shortenedurl.find_unique(
-            where={"short_code": short_code}
-        )
-        if url_record is None:
-            return None
-        
-        original_url = url_record.original_url
-        
-        # Repopular cache para próximas requisições
-        await cache_url(short_code, original_url)
+        return None
     
-    # 3. Incrementar cliques (sempre no Redis, atômico)
-    await increment_clicks(short_code)
+    # Incrementar cliques em background (fire-and-forget)
+    import asyncio
+    asyncio.create_task(increment_clicks(short_code))
     
     return original_url
 
