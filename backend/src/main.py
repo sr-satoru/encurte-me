@@ -18,6 +18,7 @@ from src.redis_service import connect_redis, disconnect_redis, init_counter
 from src.shortener.shortener_service import resolve_short_url
 from prisma import Prisma
 from contextlib import asynccontextmanager
+from src.swagger import setup_swagger
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,6 +32,7 @@ async def lifespan(app: FastAPI):
     await disconnect_db()
 
 app = FastAPI(title="URL Shortener Backend", lifespan=lifespan)
+setup_swagger(app)
 
 # CORS setup
 app.add_middleware(
@@ -63,8 +65,9 @@ app.include_router(recovery_router)
 
 # --- Rotas de Autenticação ---
 
-@app.post("/register", status_code=status.HTTP_201_CREATED)
+@app.post("/register", status_code=status.HTTP_201_CREATED, tags=["Auth"])
 async def register(response: Response, user_data: UserRegister, db: Prisma = Depends(get_db)):
+    """Cria um novo usuário e faz login automático."""
     # Verificar reCAPTCHA
     await verify_captcha(user_data.captcha_token)
     
@@ -95,8 +98,9 @@ async def register(response: Response, user_data: UserRegister, db: Prisma = Dep
         "user": {"email": user.email, "name": user.name}
     }
 
-@app.post("/login")
+@app.post("/login", tags=["Auth"])
 async def login(response: Response, login_data: UserLogin, db: Prisma = Depends(get_db)):
+    """Autentica o usuário e define o cookie de sessão."""
     # Verificar reCAPTCHA
     await verify_captcha(login_data.captcha_token)
     
@@ -112,12 +116,13 @@ async def login(response: Response, login_data: UserLogin, db: Prisma = Depends(
     
     return {"message": "Login successful", "user": {"email": user.email, "name": user.name}}
 
-@app.post("/logout")
+@app.post("/logout", tags=["Auth"])
 async def logout(response: Response):
+    """Remove o cookie de autenticação."""
     clear_auth_cookie(response)
     return {"message": "Logout successful"}
 
-@app.post("/change-password")
+@app.post("/change-password", tags=["Account"])
 async def change_password(
     data: UserChangePassword, 
     email: str = Depends(get_current_user_email), 
@@ -138,15 +143,17 @@ async def change_password(
     
     return {"message": "Senha alterada com sucesso"}
 
-@app.get("/me")
+@app.get("/me", tags=["Account"])
 async def read_users_me(email: str = Depends(get_current_user_email), db: Prisma = Depends(get_db)):
+    """Retorna os dados do usuário autenticado."""
     user = await db.user.find_unique(where={"email": email})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {"email": user.email, "name": user.name, "created_at": user.created_at}
 
-@app.get("/health")
+@app.get("/health", tags=["System"])
 async def health_check():
+    """Verifica se a API e serviços estão operacionais."""
     return {"status": "ok"}
 
 
@@ -154,7 +161,7 @@ class DeleteAccountRequest(BaseModel):
     confirmation: str
 
 
-@app.delete("/delete-account")
+@app.delete("/delete-account", tags=["Account"])
 async def delete_account(
     data: DeleteAccountRequest,
     response: Response,
@@ -193,7 +200,7 @@ async def delete_account(
 # --- Rota de Redirecionamento (DEVE ser a ÚLTIMA rota) ---
 # Esta rota captura /{short_code} — por isso precisa vir depois de todas as outras
 
-@app.get("/{short_code}")
+@app.get("/{short_code}", include_in_schema=False)
 async def redirect_short_url(short_code: str, db: Prisma = Depends(get_db)):
     """Redireciona um short_code para a URL original."""
     original_url = await resolve_short_url(short_code, db)
