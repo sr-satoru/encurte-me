@@ -1,32 +1,54 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
+import { useAuth } from '../../contexts/AuthContext'
 import './SettingsPage.css'
 
 export default function SettingsPage() {
-    const [name, setName] = useState('Usuário')
-    const [email, setEmail] = useState('user@email.com')
+    const { user, changePassword } = useAuth()
+    const [name, setName] = useState(user?.name || '')
+    const [email, setEmail] = useState(user?.email || '')
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+    const [showNewPassword, setShowNewPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const [isPasswordLoading, setIsPasswordLoading] = useState(false)
     const [notifications, setNotifications] = useState(true)
     const [emailNotifications, setEmailNotifications] = useState(false)
 
+    useEffect(() => {
+        if (user) {
+            setName(user.name || '')
+            setEmail(user.email || '')
+        }
+    }, [user])
+
     const handleProfileSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        console.log('Profile updated:', { name, email })
-        alert('Perfil atualizado com sucesso!')
+        // Em um cenário real, chamaria a API aqui
+        toast.success('Perfil atualizado com sucesso!')
     }
 
-    const handlePasswordSubmit = (e: React.FormEvent) => {
+    const handlePasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (newPassword !== confirmPassword) {
-            alert('As senhas não coincidem!')
+            toast.error('As senhas não coincidem!')
             return
         }
-        console.log('Password changed')
-        alert('Senha alterada com sucesso!')
-        setCurrentPassword('')
-        setNewPassword('')
-        setConfirmPassword('')
+
+        setIsPasswordLoading(true)
+        try {
+            await changePassword(currentPassword, newPassword)
+            toast.success('Senha alterada com sucesso!')
+            setCurrentPassword('')
+            setNewPassword('')
+            setConfirmPassword('')
+        } catch (err: any) {
+            toast.error(err.message || 'Erro ao alterar senha')
+        } finally {
+            setIsPasswordLoading(false)
+        }
     }
 
     return (
@@ -98,44 +120,101 @@ export default function SettingsPage() {
                         <form onSubmit={handlePasswordSubmit} className="settings-form">
                             <div className="form-group">
                                 <label htmlFor="current-password" className="form-label">Senha atual</label>
-                                <input
-                                    id="current-password"
-                                    type="password"
-                                    value={currentPassword}
-                                    onChange={(e) => setCurrentPassword(e.target.value)}
-                                    className="form-input"
-                                    placeholder="••••••••"
-                                />
+                                <div className="password-input-container">
+                                    <input
+                                        id="current-password"
+                                        type={showCurrentPassword ? "text" : "password"}
+                                        value={currentPassword}
+                                        onChange={(e) => setCurrentPassword(e.target.value)}
+                                        className="form-input"
+                                        placeholder="••••••••"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        className="password-toggle-btn"
+                                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                    >
+                                        {showCurrentPassword ? (
+                                            <svg className="password-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.878 15.526L19.732 21.38M9.622 10.551L14.281 15.21M15.047 12.148L17.509 14.61M12 5C5 5 2 12 2 12C2.369 12.738 3.111 14.162 4.356 15.527M7.051 17.568C8.514 18.513 10.218 19 12 19C19 19 22 12 22 12C21.603 11.207 20.81 9.704 19.509 8.318M10.733 5.076C11.15 5.026 11.571 5 12 5M15.237 5.688C15.865 5.922 16.467 6.223 17.03 6.587M11.35 11.35L12.65 12.65M12.65 11.35L11.35 12.65" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="password-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="form-group">
                                 <label htmlFor="new-password" className="form-label">Nova senha</label>
-                                <input
-                                    id="new-password"
-                                    type="password"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    className="form-input"
-                                    placeholder="••••••••"
-                                    minLength={6}
-                                />
+                                <div className="password-input-container">
+                                    <input
+                                        id="new-password"
+                                        type={showNewPassword ? "text" : "password"}
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        className="form-input"
+                                        placeholder="••••••••"
+                                        required
+                                        minLength={6}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="password-toggle-btn"
+                                        onClick={() => setShowNewPassword(!showNewPassword)}
+                                    >
+                                        {showNewPassword ? (
+                                            <svg className="password-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.878 15.526L19.732 21.38M9.622 10.551L14.281 15.21M15.047 12.148L17.509 14.61M12 5C5 5 2 12 2 12C2.369 12.738 3.111 14.162 4.356 15.527M7.051 17.568C8.514 18.513 10.218 19 12 19C19 19 22 12 22 12C21.603 11.207 20.81 9.704 19.509 8.318M10.733 5.076C11.15 5.026 11.571 5 12 5M15.237 5.688C15.865 5.922 16.467 6.223 17.03 6.587M11.35 11.35L12.65 12.65M12.65 11.35L11.35 12.65" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="password-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="form-group">
                                 <label htmlFor="confirm-password" className="form-label">Confirmar nova senha</label>
-                                <input
-                                    id="confirm-password"
-                                    type="password"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="form-input"
-                                    placeholder="••••••••"
-                                    minLength={6}
-                                />
+                                <div className="password-input-container">
+                                    <input
+                                        id="confirm-password"
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className="form-input"
+                                        placeholder="••••••••"
+                                        required
+                                        minLength={6}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="password-toggle-btn"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    >
+                                        {showConfirmPassword ? (
+                                            <svg className="password-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.878 15.526L19.732 21.38M9.622 10.551L14.281 15.21M15.047 12.148L17.509 14.61M12 5C5 5 2 12 2 12C2.369 12.738 3.111 14.162 4.356 15.527M7.051 17.568C8.514 18.513 10.218 19 12 19C19 19 22 12 22 12C21.603 11.207 20.81 9.704 19.509 8.318M10.733 5.076C11.15 5.026 11.571 5 12 5M15.237 5.688C15.865 5.922 16.467 6.223 17.03 6.587M11.35 11.35L12.65 12.65M12.65 11.35L11.35 12.65" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="password-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
 
-                            <button type="submit" className="btn btn-primary">
-                                Alterar Senha
+                            <button type="submit" className="btn btn-primary" disabled={isPasswordLoading}>
+                                {isPasswordLoading ? 'Alterando...' : 'Alterar Senha'}
                             </button>
                         </form>
                     </div>

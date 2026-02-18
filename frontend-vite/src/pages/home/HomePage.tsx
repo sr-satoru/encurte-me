@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import './HomePage.css'
 import AddUrlModal from '@/components/AddUrlModal'
 import AppLayout from '@/components/AppLayout'
@@ -35,7 +36,7 @@ export default function HomePage() {
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text)
-        alert('Link copiado!')
+        toast.success('Link copiado com sucesso!')
     }
 
     return (

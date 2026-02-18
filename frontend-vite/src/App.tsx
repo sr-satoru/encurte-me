@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import AuthLayout from './pages/auth/AuthLayout'
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
@@ -12,6 +13,7 @@ import PrivateRoute from './components/auth/PrivateRoute'
 function App() {
     return (
         <AuthProvider>
+            <Toaster position="top-right" expand={false} richColors />
             <Routes>
                 <Route path="/" element={<Navigate to="/launches" replace />} />
 

@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
 import './AuthForms.css'
 
@@ -11,15 +12,14 @@ export default function RegisterPage() {
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-    const [success, setSuccess] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
-        setError(null)
 
         if (password !== confirmPassword) {
-            setError('As senhas não coincidem!')
+            toast.error('As senhas não coincidem!')
             return
         }
 
@@ -27,12 +27,12 @@ export default function RegisterPage() {
 
         try {
             await register(email, password, name)
-            setSuccess(true)
+            toast.success('Conta criada com sucesso!')
             setTimeout(() => {
                 navigate('/launches')
             }, 1000)
         } catch (err: any) {
-            setError(err.message || 'Falha ao criar conta. Tente novamente.')
+            toast.error(err.message || 'Falha ao criar conta. Tente novamente.')
         } finally {
             setIsLoading(false)
         }
@@ -40,8 +40,8 @@ export default function RegisterPage() {
 
     return (
         <div className="auth-form-container">
-
-
+            <h2 className="auth-form-title">Crie sua conta</h2>
+            <p className="auth-form-subtitle">Cadastre-se para começar a encurtar links</p>
             <form onSubmit={handleSubmit} className="auth-form">
                 <div className="form-group">
                     <label htmlFor="name" className="form-label">
@@ -77,32 +77,70 @@ export default function RegisterPage() {
                     <label htmlFor="password" className="form-label">
                         Senha
                     </label>
-                    <input
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="form-input"
-                        placeholder="••••••••"
-                        required
-                        minLength={6}
-                    />
+                    <div className="password-input-container">
+                        <input
+                            id="password"
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="form-input"
+                            placeholder="••••••••"
+                            required
+                            minLength={6}
+                        />
+                        <button
+                            type="button"
+                            className="password-toggle-btn"
+                            onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
+                        >
+                            {showPassword ? (
+                                <svg className="password-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.878 15.526L19.732 21.38M9.622 10.551L14.281 15.21M15.047 12.148L17.509 14.61M12 5C5 5 2 12 2 12C2.369 12.738 3.111 14.162 4.356 15.527M7.051 17.568C8.514 18.513 10.218 19 12 19C19 19 22 12 22 12C21.603 11.207 20.81 9.704 19.509 8.318M10.733 5.076C11.15 5.026 11.571 5 12 5M15.237 5.688C15.865 5.922 16.467 6.223 17.03 6.587M11.35 11.35L12.65 12.65M12.65 11.35L11.35 12.65" />
+                                </svg>
+                            ) : (
+                                <svg className="password-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
                 </div>
 
                 <div className="form-group">
                     <label htmlFor="confirmPassword" className="form-label">
                         Confirmar senha
                     </label>
-                    <input
-                        id="confirmPassword"
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="form-input"
-                        placeholder="••••••••"
-                        required
-                        minLength={6}
-                    />
+                    <div className="password-input-container">
+                        <input
+                            id="confirmPassword"
+                            type={showConfirmPassword ? "text" : "password"}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="form-input"
+                            placeholder="••••••••"
+                            required
+                            minLength={6}
+                        />
+                        <button
+                            type="button"
+                            className="password-toggle-btn"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            aria-label={showConfirmPassword ? "Esconder senha" : "Mostrar senha"}
+                        >
+                            {showConfirmPassword ? (
+                                <svg className="password-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.878 15.526L19.732 21.38M9.622 10.551L14.281 15.21M15.047 12.148L17.509 14.61M12 5C5 5 2 12 2 12C2.369 12.738 3.111 14.162 4.356 15.527M7.051 17.568C8.514 18.513 10.218 19 12 19C19 19 22 12 22 12C21.603 11.207 20.81 9.704 19.509 8.318M10.733 5.076C11.15 5.026 11.571 5 12 5M15.237 5.688C15.865 5.922 16.467 6.223 17.03 6.587M11.35 11.35L12.65 12.65M12.65 11.35L11.35 12.65" />
+                                </svg>
+                            ) : (
+                                <svg className="password-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
                 </div>
 
                 <button

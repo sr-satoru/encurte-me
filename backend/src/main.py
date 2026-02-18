@@ -40,6 +40,10 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class UserChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
 # Routes
 @app.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(response: Response, user_data: UserRegister, db: Prisma = Depends(get_db)):
@@ -88,6 +92,27 @@ async def login(response: Response, login_data: UserLogin, db: Prisma = Depends(
 async def logout(response: Response):
     clear_auth_cookie(response)
     return {"message": "Logout successful"}
+
+@app.post("/change-password")
+async def change_password(
+    data: UserChangePassword, 
+    email: str = Depends(get_current_user_email), 
+    db: Prisma = Depends(get_db)
+):
+    user = await db.user.find_unique(where={"email": email})
+    if not user or not verify_password(data.current_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Senha atual incorreta",
+        )
+    
+    new_hashed_password = get_password_hash(data.new_password)
+    await db.user.update(
+        where={"email": email},
+        data={"password_hash": new_hashed_password}
+    )
+    
+    return {"message": "Senha alterada com sucesso"}
 
 @app.get("/me")
 async def read_users_me(email: str = Depends(get_current_user_email), db: Prisma = Depends(get_db)):

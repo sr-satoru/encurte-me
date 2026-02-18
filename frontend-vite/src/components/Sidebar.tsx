@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import './Sidebar.css'
 
 export default function Sidebar() {
     const [isMobileOpen, setIsMobileOpen] = useState(false)
     const location = useLocation()
+    const { user, logout } = useAuth()
 
     const menuItems = [
         {
@@ -38,6 +40,11 @@ export default function Sidebar() {
     ]
 
     const isActive = (path: string) => location.pathname === path
+
+    const getInitials = (name: string = '') => {
+        if (!name) return 'U'
+        return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+    }
 
     return (
         <>
@@ -89,13 +96,12 @@ export default function Sidebar() {
 
                 <div className="sidebar-footer">
                     <div className="user-profile">
-                        <div className="user-avatar">U</div>
+                        <div className="user-avatar">{getInitials(user?.name)}</div>
                         <div className="user-info">
-                            <div className="user-name">Usuário</div>
-                            <div className="user-email">user@email.com</div>
+                            <div className="user-name">{user?.name || 'Carregando...'}</div>
                         </div>
                     </div>
-                    <button className="btn-logout">
+                    <button className="btn-logout" onClick={logout}>
                         <svg className="logout-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>

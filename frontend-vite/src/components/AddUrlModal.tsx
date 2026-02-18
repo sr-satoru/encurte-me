@@ -1,4 +1,5 @@
 import { useState, FormEvent, useEffect } from 'react'
+import { toast } from 'sonner'
 import './AddUrlModal.css'
 
 interface AddUrlModalProps {
@@ -25,6 +26,7 @@ export default function AddUrlModal({ onClose, onSubmit }: AddUrlModalProps) {
         await new Promise(resolve => setTimeout(resolve, 500))
 
         onSubmit(name, url)
+        toast.success('Link criado com sucesso!')
         setIsLoading(false)
     }
 
