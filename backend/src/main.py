@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, EmailStr
 from src.database.db import connect_db, disconnect_db, get_db
 from src.auth.auth import (
@@ -10,13 +11,21 @@ from src.auth.auth import (
     clear_auth_cookie,
     get_current_user_email
 )
+from src.routes.url_routes import router as url_router
+from src.redis_service import connect_redis, disconnect_redis, init_counter
+from src.shortener.shortener_service import resolve_short_url
 from prisma import Prisma
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup
     await connect_db()
+    await connect_redis()
+    await init_counter()
     yield
+    # Shutdown
+    await disconnect_redis()
     await disconnect_db()
 
 app = FastAPI(title="URL Shortener Backend", lifespan=lifespan)
@@ -44,7 +53,11 @@ class UserChangePassword(BaseModel):
     current_password: str
     new_password: str
 
-# Routes
+# --- Registrar Routers ---
+app.include_router(url_router)
+
+# --- Rotas de Autenticação ---
+
 @app.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(response: Response, user_data: UserRegister, db: Prisma = Depends(get_db)):
     # Check if user exists
@@ -124,3 +137,17 @@ async def read_users_me(email: str = Depends(get_current_user_email), db: Prisma
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+# --- Rota de Redirecionamento (DEVE ser a ÚLTIMA rota) ---
+# Esta rota captura /{short_code} — por isso precisa vir depois de todas as outras
+
+@app.get("/{short_code}")
+async def redirect_short_url(short_code: str, db: Prisma = Depends(get_db)):
+    """Redireciona um short_code para a URL original."""
+    original_url = await resolve_short_url(short_code, db)
+    if original_url is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Link não encontrado",
+        )
+    return RedirectResponse(url=original_url, status_code=status.HTTP_301_MOVED_PERMANENTLY)

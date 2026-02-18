@@ -195,3 +195,23 @@
         flex-direction: column-reverse;
     }
 }
+
+/* Short Code Display (Edit Modal) */
+.short-code-display {
+    display: flex;
+    align-items: center;
+}
+
+.short-code-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: var(--radius-md);
+    color: var(--color-primary);
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    letter-spacing: 0.05em;
+}

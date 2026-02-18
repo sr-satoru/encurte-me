@@ -281,6 +281,29 @@
     height: 18px;
 }
 
+.btn-edit {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-edit:hover {
+    color: var(--color-primary);
+    background: rgba(139, 92, 246, 0.1);
+}
+
+.btn-edit svg {
+    width: 18px;
+    height: 18px;
+}
+
 /* Empty State */
 .empty-state {
     text-align: center;

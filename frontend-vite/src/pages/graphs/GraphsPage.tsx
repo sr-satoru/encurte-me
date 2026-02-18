@@ -1,120 +1,307 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { toast } from 'sonner'
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, BarChart, Bar, Cell
 } from 'recharts'
 import AppLayout from '@/components/AppLayout'
+import { urlsApi, DashboardData } from '@/api/urls'
 import './GraphsPage.css'
 
-interface UrlItem {
-    id: string
-    name: string
-    url: string
-    shortUrl: string
-    clicks: number
-    createdAt: Date
-}
+// Cores distintas para cada link
+const LINE_COLORS = [
+    '#4f46e5', '#ec4899', '#10b981', '#f59e0b', '#06b6d4',
+    '#f43f5e', '#8b5cf6', '#14b8a6', '#f97316', '#6366f1',
+]
 
-// Em um cenário real, esses dados viriam da API. 
-// Como o usuário quer "sem dados fictícios", iniciamos com o que temos no estado.
 export default function GraphsPage() {
-    // Por enquanto, como não temos persistência global de links (vêm da HomePage), 
-    // manteremos um estado local vazio para demonstrar a estrutura.
-    const [urls] = useState<UrlItem[]>([])
-    const [selectedUrlId, setSelectedUrlId] = useState<string | 'all'>('all')
+    const [dashboard, setDashboard] = useState<DashboardData | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+    const [selectedShortCode, setSelectedShortCode] = useState<string>('')
+    const [showAll, setShowAll] = useState(false)
 
-    const chartData = useMemo(() => {
-        const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-        // Se não houver URLs, os cliques são zero.
-        return days.map(day => ({
-            name: day,
-            cliques: 0,
-        }))
+    const loadDashboard = useCallback(async () => {
+        try {
+            const data = await urlsApi.dashboard()
+            setDashboard(data)
+            if (data.urls.length > 0 && !selectedShortCode) {
+                setSelectedShortCode(data.urls[0].short_code)
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Erro ao carregar métricas')
+        } finally {
+            setIsLoading(false)
+        }
+    }, [selectedShortCode])
+
+    useEffect(() => {
+        loadDashboard()
+    }, [loadDashboard])
+
+    const urls = dashboard?.urls || []
+    const selectedUrl = urls.find(u => u.short_code === selectedShortCode)
+
+    // Coletar todos os dias únicos (últimos 7 dias)
+    const last7Days = useMemo(() => {
+        const days: string[] = []
+        const now = new Date()
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(now)
+            d.setDate(d.getDate() - i)
+            days.push(d.toISOString().split('T')[0])
+        }
+        return days
     }, [])
 
-    const barData = useMemo(() => {
-        return urls.map(url => ({
-            name: url.name.length > 10 ? url.name.substring(0, 10) + '...' : url.name,
-            cliques: url.clicks,
-            fullId: url.id
-        }))
-    }, [urls])
+    // Dados do gráfico de linhas: eixo X = dias, linhas = links
+    const lineChartData = useMemo(() => {
+        const visibleUrls = showAll ? urls : (selectedUrl ? [selectedUrl] : [])
 
-    const selectedUrl = urls.find(u => u.id === selectedUrlId)
+        return last7Days.map(day => {
+            const point: Record<string, any> = {
+                name: new Date(day + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' }),
+                fullDate: day,
+            }
+            for (const url of visibleUrls) {
+                const label = url.name || url.short_code
+                point[label] = url.daily_clicks?.[day] || 0
+            }
+            return point
+        })
+    }, [last7Days, urls, showAll, selectedUrl])
+
+    // Nomes das linhas (para renderizar dinamicamente)
+    const lineNames = useMemo(() => {
+        const visibleUrls = showAll ? urls : (selectedUrl ? [selectedUrl] : [])
+        return visibleUrls.map(u => u.name || u.short_code)
+    }, [urls, showAll, selectedUrl])
+
+    // Dados de horários com mais cliques (distribuição por hora)
+    const hourlyData = useMemo(() => {
+        const hours: { hora: string; cliques: number }[] = []
+        const hourMap = dashboard?.all_hourly || {}
+
+        for (let h = 0; h < 24; h++) {
+            const key = String(h)
+            hours.push({
+                hora: `${h.toString().padStart(2, '0')}h`,
+                cliques: hourMap[key] || 0,
+            })
+        }
+        return hours
+    }, [dashboard])
+
+    // Hora de pico
+    const peakHour = useMemo(() => {
+        const max = hourlyData.reduce((best, h) => h.cliques > best.cliques ? h : best, hourlyData[0])
+        return max
+    }, [hourlyData])
+
+    if (isLoading) {
+        return (
+            <AppLayout>
+                <div className="graphs-page">
+                    <main className="graphs-main">
+                        <div className="graphs-loading">
+                            <div className="spinner" style={{
+                                width: 32, height: 32,
+                                border: '3px solid var(--color-border)',
+                                borderTopColor: 'var(--color-primary)',
+                                borderRadius: '50%',
+                                animation: 'spin 0.6s linear infinite',
+                            }}></div>
+                            <p>Carregando métricas...</p>
+                        </div>
+                    </main>
+                </div>
+            </AppLayout>
+        )
+    }
 
     return (
         <AppLayout>
             <div className="graphs-page">
                 <main className="graphs-main">
                     <div className="graphs-container">
+                        {/* Header */}
                         <div className="page-header">
                             <div>
                                 <h1 className="page-title">Análise de Performance</h1>
-                                <p className="page-subtitle">Acompanhe as estatísticas detalhadas dos seus links</p>
+                                <p className="page-subtitle">Estatísticas em tempo real dos seus links</p>
                             </div>
                         </div>
 
-                        <div className="graphs-grid">
-                            <div className="chart-card main-chart">
-                                <div className="chart-header">
-                                    <h3>{selectedUrlId === 'all' ? 'Cliques Totais (7 dias)' : `Cliques: ${selectedUrl?.name}`}</h3>
-                                    <select
-                                        className="chart-select"
-                                        value={selectedUrlId}
-                                        onChange={(e) => setSelectedUrlId(e.target.value)}
-                                        disabled={urls.length === 0}
-                                    >
-                                        <option value="all">Todos os Links</option>
-                                        {urls.map(url => (
-                                            <option key={url.id} value={url.id}>{url.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="chart-body">
-                                    <ResponsiveContainer width="100%" height={300}>
-                                        <AreaChart data={chartData}>
-                                            <defs>
-                                                <linearGradient id="colorCliques" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                                            <Tooltip
-                                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                            />
-                                            <Area type="monotone" dataKey="cliques" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorCliques)" />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                </div>
+                        {/* Stats Cards */}
+                        <div className="stats-row">
+                            <div className="stat-card-mini">
+                                <span className="stat-card-label">Total de Links</span>
+                                <span className="stat-card-value">{dashboard?.total_urls || 0}</span>
                             </div>
+                            <div className="stat-card-mini">
+                                <span className="stat-card-label">Total de Cliques</span>
+                                <span className="stat-card-value">{dashboard?.total_clicks || 0}</span>
+                            </div>
+                            <div className="stat-card-mini">
+                                <span className="stat-card-label">Horário de Pico</span>
+                                <span className="stat-card-value">
+                                    {peakHour && peakHour.cliques > 0 ? peakHour.hora : '—'}
+                                </span>
+                            </div>
+                        </div>
 
-                            <div className="chart-card side-chart">
-                                <div className="chart-header">
-                                    <h3>Performance Comparativa</h3>
+                        {urls.length === 0 ? (
+                            <div className="empty-chart-msg" style={{ padding: '4rem 2rem' }}>
+                                <p>Sem links criados ainda. Crie links na página inicial para ver métricas aqui.</p>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Gráfico de Linhas — Cliques por Dia */}
+                                <div className="chart-card">
+                                    <div className="chart-header">
+                                        <h3>Cliques por Dia (7 dias)</h3>
+                                        <div className="chart-controls">
+                                            <label className="switch-label">
+                                                <span className="switch-text">Todos</span>
+                                                <div className={`switch-track ${showAll ? 'active' : ''}`} onClick={() => setShowAll(!showAll)}>
+                                                    <div className="switch-thumb"></div>
+                                                </div>
+                                            </label>
+
+                                            {!showAll && (
+                                                <select
+                                                    className="chart-select"
+                                                    value={selectedShortCode}
+                                                    onChange={(e) => setSelectedShortCode(e.target.value)}
+                                                >
+                                                    {urls.map(url => (
+                                                        <option key={url.short_code} value={url.short_code}>
+                                                            {url.name || url.short_code}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="chart-body">
+                                        <ResponsiveContainer width="100%" height={350}>
+                                            <LineChart data={lineChartData}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(128,128,128,0.12)" />
+                                                <XAxis
+                                                    dataKey="name"
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                                                    dy={10}
+                                                />
+                                                <YAxis
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                                                    allowDecimals={false}
+                                                />
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        borderRadius: '12px',
+                                                        border: 'none',
+                                                        boxShadow: '0 8px 24px rgb(0 0 0 / 0.15)',
+                                                        background: 'var(--color-surface)',
+                                                        color: 'var(--color-text-primary)',
+                                                        padding: '12px 16px',
+                                                    }}
+                                                />
+                                                {lineNames.map((name, i) => (
+                                                    <Line
+                                                        key={name}
+                                                        type="monotone"
+                                                        dataKey={name}
+                                                        stroke={LINE_COLORS[i % LINE_COLORS.length]}
+                                                        strokeWidth={2.5}
+                                                        dot={{ fill: LINE_COLORS[i % LINE_COLORS.length], strokeWidth: 0, r: 4 }}
+                                                        activeDot={{ r: 6, fill: LINE_COLORS[i % LINE_COLORS.length], stroke: '#fff', strokeWidth: 2 }}
+                                                        connectNulls
+                                                    />
+                                                ))}
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
                                 </div>
-                                <div className="chart-body">
-                                    {urls.length > 0 ? (
-                                        <ResponsiveContainer width="100%" height={300}>
-                                            <BarChart data={barData} layout="vertical">
-                                                <XAxis type="number" hide />
-                                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={80} tick={{ fontSize: 11 }} />
-                                                <Tooltip cursor={{ fill: 'transparent' }} />
-                                                <Bar dataKey="cliques" radius={[0, 4, 4, 0]}>
-                                                    {barData.map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={entry.fullId === selectedUrlId ? '#4f46e5' : '#818cf8'} />
+
+                                {/* Gráfico de Barras — Distribuição por Hora */}
+                                <div className="chart-card">
+                                    <div className="chart-header">
+                                        <h3>Horários com Mais Cliques</h3>
+                                        <span className="chart-hint">Distribuição de cliques por hora do dia</span>
+                                    </div>
+                                    <div className="chart-body">
+                                        <ResponsiveContainer width="100%" height={250}>
+                                            <BarChart data={hourlyData}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(128,128,128,0.12)" />
+                                                <XAxis
+                                                    dataKey="hora"
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={{ fill: '#6b7280', fontSize: 10 }}
+                                                    interval={1}
+                                                />
+                                                <YAxis
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={{ fill: '#6b7280', fontSize: 11 }}
+                                                    allowDecimals={false}
+                                                />
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        borderRadius: '12px',
+                                                        border: 'none',
+                                                        boxShadow: '0 8px 24px rgb(0 0 0 / 0.15)',
+                                                        background: 'var(--color-surface)',
+                                                        color: 'var(--color-text-primary)',
+                                                    }}
+                                                    formatter={(value: unknown) => [`${value} cliques`, 'Cliques']}
+                                                />
+                                                <Bar dataKey="cliques" radius={[4, 4, 0, 0]}>
+                                                    {hourlyData.map((entry, index) => (
+                                                        <Cell
+                                                            key={`cell-${index}`}
+                                                            fill={entry.cliques === peakHour?.cliques && entry.cliques > 0
+                                                                ? '#4f46e5'
+                                                                : 'rgba(79, 70, 229, 0.3)'}
+                                                        />
                                                     ))}
                                                 </Bar>
                                             </BarChart>
                                         </ResponsiveContainer>
-                                    ) : (
-                                        <div className="empty-chart-msg">Sem links para comparar</div>
-                                    )}
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+
+                                {/* Tabela de detalhes */}
+                                <div className="chart-card">
+                                    <div className="chart-header">
+                                        <h3>Detalhes por Link</h3>
+                                    </div>
+                                    <div className="details-table">
+                                        <div className="details-header">
+                                            <span>Nome</span>
+                                            <span>Código</span>
+                                            <span>Cliques</span>
+                                            <span>Criado em</span>
+                                        </div>
+                                        {urls.map(url => (
+                                            <div key={url.short_code} className="details-row">
+                                                <span className="details-name" title={url.original_url}>
+                                                    {url.name || '—'}
+                                                </span>
+                                                <span className="details-code">{url.short_code}</span>
+                                                <span className="details-clicks">{url.clicks}</span>
+                                                <span className="details-date">
+                                                    {new Date(url.created_at).toLocaleDateString('pt-BR')}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </main>
             </div>

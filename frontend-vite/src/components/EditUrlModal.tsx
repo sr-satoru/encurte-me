@@ -3,14 +3,15 @@ import { toast } from 'sonner'
 import { urlsApi, UrlItem } from '@/api/urls'
 import './AddUrlModal.css'
 
-interface AddUrlModalProps {
+interface EditUrlModalProps {
+    urlItem: UrlItem
     onClose: () => void
-    onCreated: (created: UrlItem) => void
+    onUpdated: (updated: UrlItem) => void
 }
 
-export default function AddUrlModal({ onClose, onCreated }: AddUrlModalProps) {
-    const [name, setName] = useState('')
-    const [url, setUrl] = useState('')
+export default function EditUrlModal({ urlItem, onClose, onUpdated }: EditUrlModalProps) {
+    const [name, setName] = useState(urlItem.name || '')
+    const [url, setUrl] = useState(urlItem.original_url)
     const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
@@ -25,12 +26,28 @@ export default function AddUrlModal({ onClose, onCreated }: AddUrlModalProps) {
         setIsLoading(true)
 
         try {
-            const created = await urlsApi.create(url, name || undefined)
-            onCreated(created)
-            toast.success('Link criado com sucesso!')
+            const updateData: { url?: string; name?: string } = {}
+
+            // Apenas enviar campos que mudaram
+            if (url !== urlItem.original_url) {
+                updateData.url = url
+            }
+            if (name !== (urlItem.name || '')) {
+                updateData.name = name
+            }
+
+            if (Object.keys(updateData).length === 0) {
+                toast.info('Nenhuma alteração detectada')
+                setIsLoading(false)
+                return
+            }
+
+            const updated = await urlsApi.update(urlItem.short_code, updateData)
+            onUpdated(updated)
+            toast.success('Link atualizado com sucesso!')
             onClose()
         } catch (error: any) {
-            toast.error(error.message || 'Erro ao criar link')
+            toast.error(error.message || 'Erro ao atualizar link')
         } finally {
             setIsLoading(false)
         }
@@ -46,7 +63,7 @@ export default function AddUrlModal({ onClose, onCreated }: AddUrlModalProps) {
         <div className="modal-overlay" onClick={handleBackdropClick}>
             <div className="modal-content">
                 <div className="modal-header">
-                    <h2 className="modal-title">Criar Novo Link</h2>
+                    <h2 className="modal-title">Editar Link</h2>
                     <button
                         className="modal-close"
                         onClick={onClose}
@@ -59,30 +76,37 @@ export default function AddUrlModal({ onClose, onCreated }: AddUrlModalProps) {
                 </div>
 
                 <form onSubmit={handleSubmit} className="modal-form">
+                    {/* Short Code (somente leitura) */}
                     <div className="form-group">
-                        <label htmlFor="url-name" className="form-label">
+                        <label className="form-label">
+                            Link Curto
+                        </label>
+                        <div className="short-code-display">
+                            <span className="short-code-badge">{urlItem.short_code}</span>
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="edit-name" className="form-label">
                             Nome do Link
                         </label>
                         <input
-                            id="url-name"
+                            id="edit-name"
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             className="form-input"
-                            placeholder="Digite o nome para o link"
+                            placeholder="Nome descritivo para o link"
                             autoFocus
                         />
-                        <span className="form-hint">
-                            Um nome descritivo para identificar seu link
-                        </span>
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="url-link" className="form-label">
+                        <label htmlFor="edit-url" className="form-label">
                             URL de Destino
                         </label>
                         <input
-                            id="url-link"
+                            id="edit-url"
                             type="url"
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
@@ -91,7 +115,7 @@ export default function AddUrlModal({ onClose, onCreated }: AddUrlModalProps) {
                             required
                         />
                         <span className="form-hint">
-                            O endereço completo para onde o link irá redirecionar
+                            Ao alterar a URL, o cache Redis será atualizado automaticamente
                         </span>
                     </div>
 
@@ -112,10 +136,10 @@ export default function AddUrlModal({ onClose, onCreated }: AddUrlModalProps) {
                             {isLoading ? (
                                 <span className="btn-loading">
                                     <span className="spinner"></span>
-                                    Criando...
+                                    Salvando...
                                 </span>
                             ) : (
-                                'Criar Link'
+                                'Salvar Alterações'
                             )}
                         </button>
                     </div>

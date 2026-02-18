@@ -1,42 +1,61 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import './HomePage.css'
+import { urlsApi, UrlItem } from '@/api/urls'
 import AddUrlModal from '@/components/AddUrlModal'
+import EditUrlModal from '@/components/EditUrlModal'
 import AppLayout from '@/components/AppLayout'
 
-interface UrlItem {
-    id: string
-    name: string
-    url: string
-    shortUrl: string
-    clicks: number
-    createdAt: Date
-}
-
 export default function HomePage() {
-    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+    const [editingUrl, setEditingUrl] = useState<UrlItem | null>(null)
     const [urls, setUrls] = useState<UrlItem[]>([])
+    const [isLoading, setIsLoading] = useState(true)
 
-    const handleAddUrl = (name: string, url: string) => {
-        const newUrl: UrlItem = {
-            id: Date.now().toString(),
-            name,
-            url,
-            shortUrl: '', // Será preenchido pelo backend
-            clicks: 0,
-            createdAt: new Date()
+    // Carregar URLs do backend
+    const loadUrls = useCallback(async () => {
+        try {
+            const data = await urlsApi.list()
+            setUrls(data)
+        } catch (error: any) {
+            toast.error(error.message || 'Erro ao carregar links')
+        } finally {
+            setIsLoading(false)
         }
-        setUrls([newUrl, ...urls])
-        setIsModalOpen(false)
+    }, [])
+
+    useEffect(() => {
+        loadUrls()
+    }, [loadUrls])
+
+    const handleUrlCreated = (created: UrlItem) => {
+        setUrls([created, ...urls])
+        setIsAddModalOpen(false)
     }
 
-    const handleDeleteUrl = (id: string) => {
-        setUrls(urls.filter(url => url.id !== id))
+    const handleUrlUpdated = (updated: UrlItem) => {
+        setUrls(urls.map(u => u.short_code === updated.short_code ? updated : u))
+        setEditingUrl(null)
     }
 
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text)
+    const handleDeleteUrl = async (shortCode: string) => {
+        try {
+            await urlsApi.delete(shortCode)
+            setUrls(urls.filter(u => u.short_code !== shortCode))
+            toast.success('Link deletado com sucesso!')
+        } catch (error: any) {
+            toast.error(error.message || 'Erro ao deletar link')
+        }
+    }
+
+    const copyToClipboard = (shortCode: string) => {
+        const fullUrl = `${window.location.origin}/${shortCode}`
+        navigator.clipboard.writeText(fullUrl)
         toast.success('Link copiado com sucesso!')
+    }
+
+    const formatDate = (dateStr: string) => {
+        return new Date(dateStr).toLocaleDateString('pt-BR')
     }
 
     return (
@@ -47,7 +66,7 @@ export default function HomePage() {
                         {/* Header */}
                         <div className="page-header">
                             <h1 className="page-title">Links</h1>
-                            <button className="btn-add" onClick={() => setIsModalOpen(true)}>
+                            <button className="btn-add" onClick={() => setIsAddModalOpen(true)}>
                                 <svg className="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                 </svg>
@@ -61,14 +80,19 @@ export default function HomePage() {
                                 <h2 className="section-title">Seus Links</h2>
                             </div>
 
-                            {urls.length === 0 ? (
+                            {isLoading ? (
+                                <div className="empty-state">
+                                    <div className="spinner" style={{ width: 32, height: 32, margin: '0 auto', borderColor: 'var(--color-border)', borderTopColor: 'var(--color-primary)' }}></div>
+                                    <p style={{ marginTop: '1rem' }}>Carregando links...</p>
+                                </div>
+                            ) : urls.length === 0 ? (
                                 <div className="empty-state">
                                     <svg className="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                     </svg>
                                     <h4>Nenhum link criado</h4>
                                     <p>Comece criando seu primeiro link encurtado</p>
-                                    <button className="btn-add" onClick={() => setIsModalOpen(true)}>
+                                    <button className="btn-add" onClick={() => setIsAddModalOpen(true)}>
                                         <svg className="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                         </svg>
@@ -88,30 +112,30 @@ export default function HomePage() {
                                     </div>
                                     <div className="table-body">
                                         {urls.map((urlItem) => (
-                                            <div key={urlItem.id} className="table-row">
+                                            <div key={urlItem.short_code} className="table-row">
                                                 <div className="table-cell">
-                                                    <div className="url-name">{urlItem.name}</div>
+                                                    <div className="url-name">{urlItem.name || '—'}</div>
                                                     <div className="url-date">
-                                                        {urlItem.createdAt.toLocaleDateString('pt-BR')}
+                                                        {formatDate(urlItem.created_at)}
                                                     </div>
                                                 </div>
                                                 <div className="table-cell">
                                                     <a
-                                                        href={urlItem.url}
+                                                        href={urlItem.original_url}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="url-link"
-                                                        title={urlItem.url}
+                                                        title={urlItem.original_url}
                                                     >
-                                                        {urlItem.url}
+                                                        {urlItem.original_url}
                                                     </a>
                                                 </div>
                                                 <div className="table-cell">
                                                     <div className="short-url-container">
-                                                        <span className="short-url">{urlItem.shortUrl}</span>
+                                                        <span className="short-url">{urlItem.short_code}</span>
                                                         <button
                                                             className="btn-copy"
-                                                            onClick={() => copyToClipboard(urlItem.shortUrl)}
+                                                            onClick={() => copyToClipboard(urlItem.short_code)}
                                                             title="Copiar link"
                                                         >
                                                             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -124,8 +148,17 @@ export default function HomePage() {
                                                 <div className="table-cell">
                                                     <div className="table-actions">
                                                         <button
+                                                            className="btn-edit"
+                                                            onClick={() => setEditingUrl(urlItem)}
+                                                            title="Editar link"
+                                                        >
+                                                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button
                                                             className="btn-delete"
-                                                            onClick={() => handleDeleteUrl(urlItem.id)}
+                                                            onClick={() => handleDeleteUrl(urlItem.short_code)}
                                                             title="Deletar link"
                                                         >
                                                             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -143,11 +176,20 @@ export default function HomePage() {
                     </div>
                 </main>
 
-                {/* Modal */}
-                {isModalOpen && (
+                {/* Modal Criar */}
+                {isAddModalOpen && (
                     <AddUrlModal
-                        onClose={() => setIsModalOpen(false)}
-                        onSubmit={handleAddUrl}
+                        onClose={() => setIsAddModalOpen(false)}
+                        onCreated={handleUrlCreated}
+                    />
+                )}
+
+                {/* Modal Editar */}
+                {editingUrl && (
+                    <EditUrlModal
+                        urlItem={editingUrl}
+                        onClose={() => setEditingUrl(null)}
+                        onUpdated={handleUrlUpdated}
                     />
                 )}
             </div>

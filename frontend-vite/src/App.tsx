@@ -6,6 +6,7 @@ import RegisterPage from './pages/auth/RegisterPage'
 import HomePage from './pages/home/HomePage'
 import GraphsPage from './pages/graphs/GraphsPage'
 import SettingsPage from './pages/settings'
+import RedirectPage from './pages/redirect/RedirectPage'
 
 import { AuthProvider } from './contexts/AuthContext'
 import PrivateRoute from './components/auth/PrivateRoute'
@@ -41,6 +42,9 @@ function App() {
                     <Route path="register" element={<RegisterPage />} />
                 </Route>
 
+                {/* Redirecionamento de URLs curtas (público, antes do catch-all) */}
+                <Route path="/:shortCode" element={<RedirectPage />} />
+
                 <Route path="*" element={<Navigate to="/launches" replace />} />
             </Routes>
         </AuthProvider>
@@ -48,3 +52,4 @@ function App() {
 }
 
 export default App
+
