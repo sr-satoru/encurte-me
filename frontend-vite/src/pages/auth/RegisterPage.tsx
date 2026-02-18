@@ -1,7 +1,8 @@
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
+import { useCaptcha } from '../../hooks/useRecaptcha'
 import './AuthForms.css'
 
 export default function RegisterPage() {
@@ -14,6 +15,11 @@ export default function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const { renderWidget, execute: executeCaptcha } = useCaptcha()
+
+    const captchaRef = useCallback((node: HTMLDivElement | null) => {
+        if (node) renderWidget(node)
+    }, [renderWidget])
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
@@ -26,7 +32,8 @@ export default function RegisterPage() {
         setIsLoading(true)
 
         try {
-            await register(email, password, name)
+            const captchaToken = await executeCaptcha()
+            await register(email, password, name, captchaToken || undefined)
             toast.success('Conta criada com sucesso!')
             setTimeout(() => {
                 navigate('/launches')
@@ -143,6 +150,9 @@ export default function RegisterPage() {
                     </div>
                 </div>
 
+                {/* reCAPTCHA invisible container */}
+                <div ref={captchaRef}></div>
+
                 <button
                     type="submit"
                     className="btn btn-primary"
@@ -174,3 +184,4 @@ export default function RegisterPage() {
         </div>
     )
 }
+

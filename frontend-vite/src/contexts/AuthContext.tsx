@@ -10,8 +10,8 @@ interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (email: string, password: string) => Promise<void>;
-    register: (email: string, password: string, name?: string) => Promise<void>;
+    login: (email: string, password: string, captchaToken?: string) => Promise<void>;
+    register: (email: string, password: string, name?: string, captchaToken?: string) => Promise<void>;
     logout: () => Promise<void>;
     changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
@@ -37,18 +37,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         checkAuth();
     }, []);
 
-    const login = async (email: string, password: string) => {
+    const login = async (email: string, password: string, captchaToken?: string) => {
         const data = await apiFetch('/login', {
             method: 'POST',
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, captcha_token: captchaToken }),
         });
         setUser(data.user);
     };
 
-    const register = async (email: string, password: string, name?: string) => {
+    const register = async (email: string, password: string, name?: string, captchaToken?: string) => {
         const data = await apiFetch('/register', {
             method: 'POST',
-            body: JSON.stringify({ email, password, name }),
+            body: JSON.stringify({ email, password, name, captcha_token: captchaToken }),
         });
         setUser(data.user);
     };

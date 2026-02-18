@@ -1,7 +1,8 @@
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useCallback } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
+import { useCaptcha } from '../../hooks/useRecaptcha'
 import './AuthForms.css'
 
 export default function LoginPage() {
@@ -12,15 +13,21 @@ export default function LoginPage() {
     const [password, setPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const { renderWidget, execute: executeCaptcha } = useCaptcha()
 
     const from = location.state?.from?.pathname || '/launches'
+
+    const captchaRef = useCallback((node: HTMLDivElement | null) => {
+        if (node) renderWidget(node)
+    }, [renderWidget])
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
 
         try {
-            await login(email, password)
+            const captchaToken = await executeCaptcha()
+            await login(email, password, captchaToken || undefined)
             toast.success('Bem-vindo!')
             navigate(from, { replace: true })
         } catch (err: any) {
@@ -93,6 +100,9 @@ export default function LoginPage() {
                     <a href="#" className="link-text">Esqueceu a senha?</a>
                 </div>
 
+                {/* reCAPTCHA invisible container */}
+                <div ref={captchaRef}></div>
+
                 <button
                     type="submit"
                     className="btn btn-primary"
@@ -124,3 +134,4 @@ export default function LoginPage() {
         </div>
     )
 }
+

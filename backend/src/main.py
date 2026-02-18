@@ -11,6 +11,7 @@ from src.auth.auth import (
     clear_auth_cookie,
     get_current_user_email
 )
+from src.auth.captcha import verify_captcha
 from src.routes.url_routes import router as url_router
 from src.redis_service import connect_redis, disconnect_redis, init_counter
 from src.shortener.shortener_service import resolve_short_url
@@ -44,10 +45,12 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     name: str = None
+    captcha_token: str | None = None
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+    captcha_token: str | None = None
 
 class UserChangePassword(BaseModel):
     current_password: str
@@ -60,6 +63,9 @@ app.include_router(url_router)
 
 @app.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(response: Response, user_data: UserRegister, db: Prisma = Depends(get_db)):
+    # Verificar reCAPTCHA
+    await verify_captcha(user_data.captcha_token)
+    
     # Check if user exists
     existing_user = await db.user.find_unique(where={"email": user_data.email})
     if existing_user:
@@ -89,6 +95,9 @@ async def register(response: Response, user_data: UserRegister, db: Prisma = Dep
 
 @app.post("/login")
 async def login(response: Response, login_data: UserLogin, db: Prisma = Depends(get_db)):
+    # Verificar reCAPTCHA
+    await verify_captcha(login_data.captcha_token)
+    
     user = await db.user.find_unique(where={"email": login_data.email})
     if not user or not verify_password(login_data.password, user.password_hash):
         raise HTTPException(
