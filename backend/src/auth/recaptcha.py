@@ -15,7 +15,7 @@ from fastapi import HTTPException, status
 import src.config  # noqa: F401 — carrega .env da raiz
 
 
-RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY", "")
+RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
 RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify"
 
 

@@ -23,11 +23,12 @@ import src.config  # noqa: F401 — carrega .env da raiz
 
 
 # Configuração do HashID
-HASHID_SALT = os.getenv("HASHID_SALT", "default-insecure-salt-change-me")
-HASHID_MIN_LENGTH = int(os.getenv("HASHID_MIN_LENGTH", "4"))
+HASHID_SALT = os.getenv("HASHID_SALT")
+_min_len = os.getenv("HASHID_MIN_LENGTH")
+HASHID_MIN_LENGTH = int(_min_len) if _min_len else None
 
 # Chave secreta para a Feistel cipher (independente do salt do HashID)
-SCATTER_SECRET = os.getenv("SCATTER_SECRET", "scatter-secret-key-change-me")
+SCATTER_SECRET = os.getenv("SCATTER_SECRET")
 
 # Alfabeto Base62: a-z, A-Z, 0-9
 HASHID_ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"

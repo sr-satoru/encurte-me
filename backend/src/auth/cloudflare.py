@@ -18,7 +18,7 @@ from fastapi import HTTPException, status
 import src.config  # noqa: F401 — carrega .env da raiz
 
 
-TURNSTILE_SECRET_KEY = os.getenv("TURNSTILE_SECRET_KEY", "")
+TURNSTILE_SECRET_KEY = os.getenv("TURNSTILE_SECRET_KEY")
 TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 
 

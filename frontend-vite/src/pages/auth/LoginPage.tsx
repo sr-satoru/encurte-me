@@ -97,7 +97,7 @@ export default function LoginPage() {
                         <input type="checkbox" className="checkbox" />
                         <span>Lembrar-me</span>
                     </label>
-                    <a href="#" className="link-text">Esqueceu a senha?</a>
+                    <Link to="/auth/forgot-password" className="link-text">Esqueceu a senha?</Link>
                 </div>
 
                 {/* reCAPTCHA invisible container */}

@@ -7,9 +7,9 @@ import src.config  # noqa: F401 — carrega .env da raiz
 
 
 # Configuration
-JWT_SECRET = os.getenv("JWT_SECRET", "super-secret-key")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-COOKIE_NAME = os.getenv("COOKIE_NAME", "auth_token")
+JWT_SECRET = os.getenv("JWT_SECRET")
+ALGORITHM = os.getenv("ALGORITHM")
+COOKIE_NAME = os.getenv("COOKIE_NAME")
 
 # Session Constants (Hardcoded as requested)
 SESSION_DURATION_MINUTES = 7 * 24 * 60  # 7 days

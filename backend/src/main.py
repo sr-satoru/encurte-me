@@ -13,6 +13,7 @@ from src.auth.auth import (
 )
 from src.auth.captcha import verify_captcha
 from src.routes.url_routes import router as url_router
+from src.auth.recovery.recovery_routes import router as recovery_router
 from src.redis_service import connect_redis, disconnect_redis, init_counter
 from src.shortener.shortener_service import resolve_short_url
 from prisma import Prisma
@@ -58,6 +59,7 @@ class UserChangePassword(BaseModel):
 
 # --- Registrar Routers ---
 app.include_router(url_router)
+app.include_router(recovery_router)
 
 # --- Rotas de Autenticação ---
 

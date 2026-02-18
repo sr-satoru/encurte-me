@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 _ROOT_ENV = Path(__file__).resolve().parent.parent.parent / ".env"
 load_dotenv(_ROOT_ENV)
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+REDIS_URL = os.getenv("REDIS_URL")
 
 # Instância global do cliente Redis
 _redis_client: aioredis.Redis | None = None

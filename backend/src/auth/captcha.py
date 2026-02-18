@@ -18,8 +18,8 @@ import src.config  # noqa: F401 — carrega .env da raiz
 
 
 # Detectar provider baseado nas env vars
-_TURNSTILE_KEY = os.getenv("TURNSTILE_SECRET_KEY", "")
-_RECAPTCHA_KEY = os.getenv("RECAPTCHA_SECRET_KEY", "")
+_TURNSTILE_KEY = os.getenv("TURNSTILE_SECRET_KEY")
+_RECAPTCHA_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
 
 if _TURNSTILE_KEY:
     CAPTCHA_PROVIDER = "turnstile"
