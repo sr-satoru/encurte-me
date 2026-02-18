@@ -61,7 +61,7 @@ export default function AddUrlModal({ onClose, onSubmit }: AddUrlModalProps) {
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             className="form-input"
-                            placeholder="Ex: Meu Portfolio"
+                            placeholder="Digite o nome para o link"
                             required
                             autoFocus
                         />
@@ -80,7 +80,7 @@ export default function AddUrlModal({ onClose, onSubmit }: AddUrlModalProps) {
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
                             className="form-input"
-                            placeholder="https://exemplo.com"
+                            placeholder="https://"
                             required
                         />
                         <span className="form-hint">

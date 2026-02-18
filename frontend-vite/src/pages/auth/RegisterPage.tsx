@@ -1,35 +1,46 @@
 import { useState, FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 import './AuthForms.css'
 
 export default function RegisterPage() {
+    const { register } = useAuth()
+    const navigate = useNavigate()
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const [success, setSuccess] = useState(false)
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
+        setError(null)
 
         if (password !== confirmPassword) {
-            alert('As senhas não coincidem!')
+            setError('As senhas não coincidem!')
             return
         }
 
         setIsLoading(true)
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500))
-
-        console.log('Register:', { name, email, password })
-        setIsLoading(false)
+        try {
+            await register(email, password, name)
+            setSuccess(true)
+            setTimeout(() => {
+                navigate('/launches')
+            }, 1000)
+        } catch (err: any) {
+            setError(err.message || 'Falha ao criar conta. Tente novamente.')
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
         <div className="auth-form-container">
-            <h2 className="auth-form-title">Criar conta</h2>
-            <p className="auth-form-subtitle">Preencha os dados para começar</p>
+
 
             <form onSubmit={handleSubmit} className="auth-form">
                 <div className="form-group">

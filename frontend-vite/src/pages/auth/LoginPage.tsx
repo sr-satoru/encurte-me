@@ -1,27 +1,44 @@
 import { useState, FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 import './AuthForms.css'
 
 export default function LoginPage() {
+    const { login } = useAuth()
+    const navigate = useNavigate()
+    const location = useLocation()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const from = location.state?.from?.pathname || '/launches'
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
+        setError(null)
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500))
-
-        console.log('Login:', { email, password })
-        setIsLoading(false)
+        try {
+            await login(email, password)
+            navigate(from, { replace: true })
+        } catch (err: any) {
+            setError(err.message || 'Falha ao entrar. Verifique suas credenciais.')
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
         <div className="auth-form-container">
             <h2 className="auth-form-title">Bem-vindo de volta</h2>
             <p className="auth-form-subtitle">Entre com suas credenciais para continuar</p>
+
+            {error && (
+                <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '12px', borderRadius: '6px', marginBottom: '16px', fontSize: '14px' }}>
+                    {error}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="auth-form">
                 <div className="form-group">

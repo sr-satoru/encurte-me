@@ -11,7 +11,7 @@
 .settings-title {
     font-size: 1.875rem;
     font-weight: 700;
-    color: var(--color-text-primary);
+    color: var(--color-primary);
     margin-bottom: var(--spacing-sm);
 }
 
