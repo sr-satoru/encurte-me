@@ -1,8 +1,8 @@
 """
 Rotas de recuperação de senha.
 
-POST /auth/forgot-password — solicita recuperação (envia email)
-POST /auth/reset-password  — redefine a senha com token válido
+POST /forgot-password — solicita recuperação (envia email)
+POST /reset-password  — redefine a senha com token válido
 """
 
 from fastapi import APIRouter, HTTPException, status, Depends
@@ -14,7 +14,7 @@ from src.auth.auth import get_password_hash
 from src.auth.recovery.recovery_service import generate_recovery_token, consume_recovery_token
 from src.auth.recovery.email_service import send_recovery_email
 
-router = APIRouter(prefix="/auth", tags=["recovery"])
+router = APIRouter(tags=["recovery"])
 
 
 class ForgotPasswordRequest(BaseModel):

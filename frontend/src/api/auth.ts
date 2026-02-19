@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8303'; // Usando a porta do nosso backend
+const API_URL = '/api';
 
 export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
     const url = `${API_URL}${endpoint}`;

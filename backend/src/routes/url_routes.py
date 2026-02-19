@@ -2,13 +2,13 @@
 Rotas da API para o Encurtador de URLs.
 
 Endpoints autenticados para CRUD de URLs:
-- POST   /api/urls                      — Criar URL encurtada
-- GET    /api/urls                      — Listar URLs do usuário
-- GET    /api/urls/dashboard            — Métricas agregadas (sync Redis→DB)
-- GET    /api/urls/resolve/{short_code} — Resolver URL (JSON, para frontend)
-- PATCH  /api/urls/{short_code}         — Atualizar URL (nome e/ou destino)
-- DELETE /api/urls/{short_code}         — Deletar URL
-- GET    /api/urls/{short_code}/stats   — Métricas de cliques
+- POST   /urls                      — Criar URL encurtada
+- GET    /urls                      — Listar URLs do usuário
+- GET    /urls/dashboard            — Métricas agregadas (sync Redis→DB)
+- GET    /urls/resolve/{short_code} — Resolver URL (JSON, para frontend)
+- PATCH  /urls/{short_code}         — Atualizar URL (nome e/ou destino)
+- DELETE /urls/{short_code}         — Deletar URL
+- GET    /urls/{short_code}/stats   — Métricas de cliques
 
 IMPORTANTE: Rotas com path fixo (dashboard, resolve) DEVEM vir ANTES
 das rotas com path param ({short_code}) para evitar conflito no FastAPI.
@@ -29,7 +29,7 @@ from src.shortener.shortener_service import (
     resolve_short_url,
 )
 
-router = APIRouter(prefix="/api/urls", tags=["urls"])
+router = APIRouter(prefix="/urls", tags=["urls"])
 
 
 # --- Modelos de Request ---

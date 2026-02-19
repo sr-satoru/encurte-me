@@ -12,7 +12,7 @@ export default function RedirectPage() {
         if (!shortCode || fetchedRef.current) return
         fetchedRef.current = true
 
-        apiFetch(`/api/urls/resolve/${shortCode}`)
+        apiFetch(`/urls/resolve/${shortCode}`)
             .then((data) => {
                 window.location.replace(data.original_url)
             })

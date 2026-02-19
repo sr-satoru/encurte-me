@@ -34,10 +34,17 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="URL Shortener Backend", lifespan=lifespan)
 setup_swagger(app)
 
+import os
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+
 # CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], # Vite default
+    allow_origins=[
+        FRONTEND_URL,
+        "http://localhost:5173",
+        "http://localhost:4200", # Padrão superpostiz se necessário
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
