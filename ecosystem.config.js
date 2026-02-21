@@ -3,7 +3,7 @@ module.exports = {
         {
             name: 'encurtador-backend',
             script: 'venv/bin/uvicorn',
-            args: 'src.main:app --host 0.0.0.0 --port 8303',
+            args: 'src.main:app --host 127.0.0.1 --port 8303',
             cwd: './backend',
             interpreter: 'python3',
             env: {

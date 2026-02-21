@@ -12,6 +12,7 @@ import RedirectPage from './pages/redirect/RedirectPage'
 
 import { AuthProvider } from './contexts/AuthContext'
 import PrivateRoute from './components/auth/PrivateRoute'
+import GuestRoute from './components/auth/GuestRoute'
 
 function App() {
     return (
@@ -37,11 +38,17 @@ function App() {
                     </PrivateRoute>
                 } />
 
-                {/* Rotas Públicas */}
+                {/* Rotas de Auth */}
                 <Route path="/auth" element={<AuthLayout />}>
                     <Route index element={<Navigate to="/auth/login" replace />} />
-                    <Route path="login" element={<LoginPage />} />
-                    <Route path="register" element={<RegisterPage />} />
+
+                    {/* Rotas bloqueadas para usuários já autenticados */}
+                    <Route element={<GuestRoute />}>
+                        <Route path="login" element={<LoginPage />} />
+                        <Route path="register" element={<RegisterPage />} />
+                    </Route>
+
+                    {/* Rotas sempre públicas */}
                     <Route path="forgot-password" element={<ForgotPasswordPage />} />
                     <Route path="reset-password" element={<ResetPasswordPage />} />
                 </Route>
