@@ -1,7 +1,6 @@
 import { useState, FormEvent, useEffect } from 'react'
 import { toast } from 'sonner'
 import { urlsApi, UrlItem } from '@/api/urls'
-import './AddUrlModal.css'
 
 interface EditUrlModalProps {
     urlItem: UrlItem

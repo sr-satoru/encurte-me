@@ -18,7 +18,7 @@ module.exports = {
             name: 'encurtador-redis',
             script: 'redis-server',
             // IMPORTANTE: Se mudou a porta no .env, mude aqui também
-            args: '--port 6379',
+            args: '--port 6380',
             autorestart: true,
             watch: false,
         }

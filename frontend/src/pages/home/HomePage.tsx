@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import './HomePage.css'
 import { urlsApi, UrlItem } from '@/api/urls'
 import AddUrlModal from '@/components/AddUrlModal'
 import EditUrlModal from '@/components/EditUrlModal'
@@ -100,77 +99,89 @@ export default function HomePage() {
                                     </button>
                                 </div>
                             ) : (
-                                <div className="urls-table">
-                                    <div className="table-header">
-                                        <div className="table-row">
-                                            <div className="table-cell">Nome</div>
-                                            <div className="table-cell">URL Original</div>
-                                            <div className="table-cell">Link Curto</div>
-                                            <div className="table-cell">Cliques</div>
-                                            <div className="table-cell">Ações</div>
+                                <>
+                                    {/* Desktop: tabela */}
+                                    <div className="urls-table">
+                                        <div className="table-header">
+                                            <div className="table-row">
+                                                <div className="table-cell">Nome</div>
+                                                <div className="table-cell">URL Original</div>
+                                                <div className="table-cell">Link Curto</div>
+                                                <div className="table-cell">Cliques</div>
+                                                <div className="table-cell">Ações</div>
+                                            </div>
+                                        </div>
+                                        <div className="table-body">
+                                            {urls.map((urlItem) => (
+                                                <div key={urlItem.short_code} className="table-row">
+                                                    <div className="table-cell">
+                                                        <div className="url-name">{urlItem.name || '—'}</div>
+                                                        <div className="url-date">{formatDate(urlItem.created_at)}</div>
+                                                    </div>
+                                                    <div className="table-cell">
+                                                        <a href={urlItem.original_url} target="_blank" rel="noopener noreferrer" className="url-link" title={urlItem.original_url}>
+                                                            {urlItem.original_url}
+                                                        </a>
+                                                    </div>
+                                                    <div className="table-cell">
+                                                        <div className="short-url-container">
+                                                            <span className="short-url">{urlItem.short_code}</span>
+                                                            <button className="btn-copy" onClick={() => copyToClipboard(urlItem.short_code)} title="Copiar link">
+                                                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div className="table-cell url-clicks">{urlItem.clicks}</div>
+                                                    <div className="table-cell">
+                                                        <div className="table-actions">
+                                                            <button className="btn-edit" onClick={() => setEditingUrl(urlItem)} title="Editar link">
+                                                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                            </button>
+                                                            <button className="btn-delete" onClick={() => handleDeleteUrl(urlItem.short_code)} title="Deletar link">
+                                                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                    <div className="table-body">
+
+                                    {/* Mobile: cards */}
+                                    <div className="url-cards-list">
                                         {urls.map((urlItem) => (
-                                            <div key={urlItem.short_code} className="table-row">
-                                                <div className="table-cell">
-                                                    <div className="url-name">{urlItem.name || '—'}</div>
-                                                    <div className="url-date">
-                                                        {formatDate(urlItem.created_at)}
-                                                    </div>
-                                                </div>
-                                                <div className="table-cell">
-                                                    <a
-                                                        href={urlItem.original_url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="url-link"
-                                                        title={urlItem.original_url}
-                                                    >
-                                                        {urlItem.original_url}
-                                                    </a>
-                                                </div>
-                                                <div className="table-cell">
-                                                    <div className="short-url-container">
-                                                        <span className="short-url">{urlItem.short_code}</span>
-                                                        <button
-                                                            className="btn-copy"
-                                                            onClick={() => copyToClipboard(urlItem.short_code)}
-                                                            title="Copiar link"
-                                                        >
-                                                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                            </svg>
+                                            <div key={urlItem.short_code} className="url-card">
+                                                <div className="url-card-top">
+                                                    <span className="url-card-name">{urlItem.name || urlItem.short_code}</span>
+                                                    <div className="url-card-actions">
+                                                        <button className="btn-edit" onClick={() => setEditingUrl(urlItem)} title="Editar">
+                                                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                        </button>
+                                                        <button className="btn-delete" onClick={() => handleDeleteUrl(urlItem.short_code)} title="Deletar">
+                                                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <div className="table-cell url-clicks">{urlItem.clicks}</div>
-                                                <div className="table-cell">
-                                                    <div className="table-actions">
-                                                        <button
-                                                            className="btn-edit"
-                                                            onClick={() => setEditingUrl(urlItem)}
-                                                            title="Editar link"
-                                                        >
-                                                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                            </svg>
-                                                        </button>
-                                                        <button
-                                                            className="btn-delete"
-                                                            onClick={() => handleDeleteUrl(urlItem.short_code)}
-                                                            title="Deletar link"
-                                                        >
-                                                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                            </svg>
-                                                        </button>
-                                                    </div>
+                                                <a href={urlItem.original_url} target="_blank" rel="noopener noreferrer" className="url-card-destination" title={urlItem.original_url}>
+                                                    {urlItem.original_url}
+                                                </a>
+                                                <div className="url-card-short">
+                                                    <span className="short-url">{urlItem.short_code}</span>
+                                                    <button className="btn-copy" onClick={() => copyToClipboard(urlItem.short_code)} title="Copiar link">
+                                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                                    </button>
+                                                </div>
+                                                <div className="url-card-meta">
+                                                    <span className="url-card-clicks">
+                                                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" /></svg>
+                                                        {urlItem.clicks} cliques
+                                                    </span>
+                                                    <span className="url-card-date">{formatDate(urlItem.created_at)}</span>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
-                                </div>
+                                </>
                             )}
                         </div>
                     </div>

@@ -6,7 +6,6 @@ import {
 } from 'recharts'
 import AppLayout from '@/components/AppLayout'
 import { urlsApi, DashboardData } from '@/api/urls'
-import './GraphsPage.css'
 
 // Cores distintas para cada link
 const LINE_COLORS = [

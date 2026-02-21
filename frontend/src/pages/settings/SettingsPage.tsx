@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
 import ConfirmDeleteModal from '../../components/ConfirmDeleteModal'
-import './SettingsPage.css'
 
 export default function SettingsPage() {
     const { user, changePassword, deleteAccount } = useAuth()

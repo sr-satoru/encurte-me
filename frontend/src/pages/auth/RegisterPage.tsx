@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCaptcha } from '../../hooks/useRecaptcha'
-import './AuthForms.css'
 
 export default function RegisterPage() {
     const { register } = useAuth()

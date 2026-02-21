@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import './Sidebar.css'
 
 export default function Sidebar() {
     const [isMobileOpen, setIsMobileOpen] = useState(false)

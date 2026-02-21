@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import './ConfirmDeleteModal.css'
 
 interface Props {
     isOpen: boolean

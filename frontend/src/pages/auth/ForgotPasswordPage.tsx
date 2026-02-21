@@ -2,7 +2,6 @@ import { useState, FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { apiFetch } from '../../api/auth'
-import './AuthForms.css'
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('')
