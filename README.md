@@ -9,23 +9,26 @@ Sistema profissional de encurtamento de URLs com analytics, autenticação e arq
 
 ---
 
-## 📥 Instalação (Ubuntu/Debian)
+## 📥 Instalação
 
-### 1. Pré-requisitos
-Certifique-se de ter Python 3.10+, Node.js 18+ e o Redis instalados.
+Escolha o método de instalação de acordo com o seu ambiente.
 
-### 2. Preparando os Serviços
-Use os scripts utilitários na pasta `var/`:
+---
 
+### 💻 Desenvolvimento Local
+
+Para rodar o projeto localmente para testes e modificações:
+
+#### 1. Pré-requisitos
+Instale o Python 3.10+, Node.js 18+ e o Redis.
+
+#### 2. Preparando os Serviços
 ```bash
-# Instalar o Redis (se não tiver)
-bash var/install-redis.sh
-
-# Iniciar o Redis na porta configurada no .env
+# Iniciar o Redis (configurado no .env)
 bash var/start-redis.sh
 ```
 
-### 3. Backend
+#### 3. Backend (Desenvolvimento)
 ```bash
 cd backend
 python3 -m venv venv
@@ -36,7 +39,7 @@ prisma db push
 uvicorn src.main:app --reload --port 8303
 ```
 
-### 4. Frontend
+#### 4. Frontend (Desenvolvimento)
 ```bash
 cd frontend
 npm install
@@ -45,38 +48,58 @@ npm run dev
 
 ---
 
+### 🚀 Deploy em VPS (Produção)
+
+Este é o método recomendado para colocar o sistema no ar de forma estável.
+
+#### 1. Proxy e SSL (Nginx)
+Configure o Nginx no seu servidor e gere os certificados SSL (Certbot/Let's Encrypt). Use o modelo fornecido em `var/nginx.conf` como referência.
+
+#### 2. Build do Frontend
+```bash
+cd frontend
+npm install
+npm run build
+```
+
+#### 3. Configuração do Backend
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+prisma generate
+prisma db push
+```
+
+#### 4. Variáveis de Ambiente (.env)
+No arquivo `.env` na raiz do projeto, certifique-se de configurar o caminho **absoluto** do banco de dados SQLite, pois em modo de produção ele pode não localizar o arquivo a partir da raiz:
+
+```env
+DATABASE_URL="file:/caminho/completo/para/o/projeto/backend/prisma/dev.db"
+```
+
+#### 5. Gerenciamento com PM2
+O PM2 manterá os processos ativos e reiniciará o sistema em caso de falhas ou reboot do servidor.
+
+```bash
+# Na raiz do projeto
+pm2 start ecosystem.config.js
+```
+
+**Comandos úteis do PM2:**
+- `pm2 list` (Ver status)
+- `pm2 logs` (Ver logs em tempo real)
+- `pm2 restart encurtador-backend` (Reiniciar backend)
+
+---
+
 ## 📖 Documentação da API
 
 O backend gera automaticamente a documentação interativa da API. Com o backend rodando, acesse:
 
-- **Swagger UI (Interativo):** [http://localhost:8303/docs](http://localhost:8303/docs)
-- **ReDoc (Documentação Limpa):** [http://localhost:8303/redoc](http://localhost:8303/redoc)
+- **Swagger UI:** `http://seu-dominio.com/docs`
+- **ReDoc:** `http://seu-dominio.com/redoc`
 
 > [!NOTE]
-> No ambiente de desenvolvimento, o Vite faz o proxy de `localhost:5173/api/*` para o backend, permitindo que você use o frontend sem problemas de CORS.
-
----
-
-## 🚀 Gerenciamento em Produção (PM2)
-
-Para garantir que o sistema continue rodando mesmo após reiniciar o servidor ou erros fatais, recomendamos o uso do **PM2**.
-
-### 1. Iniciar tudo (Backend + Redis)
-```bash
-pm2 start ecosystem.config.js
-```
-
-### 2. Comandos úteis do PM2
-- **Ver status:** `pm2 list`
-- **Ver logs em tempo real:** `pm2 logs`
-- **Reiniciar tudo:** `pm2 restart ecosystem.config.js`
-- **Parar tudo:** `pm2 stop ecosystem.config.js`
-
----
-
-## ⚙️ Configuração de Produção (Nginx)
-Para colocar o sistema no ar com seu domínio real:
-1. Altere o `FRONTEND_URL` no `.env`.
-2. Gere o build do frontend: `cd frontend && npm run build`.
-3. Configure o Nginx usando o modelo em `var/nginx.conf`.
-4. O Nginx cuidará de remover o prefixo `/api` e entregar as requisições para o FastAPI.
+> No ambiente de desenvolvimento, o Vite faz o proxy de `localhost:5173/api/*` para o backend. Em produção, o Nginx é responsável por encaminhar as requisições `/api` para o serviço FastAPI.
