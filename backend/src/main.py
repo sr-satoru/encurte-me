@@ -36,6 +36,7 @@ setup_swagger(app)
 
 import os
 FRONTEND_URL = os.getenv("FRONTEND_URL")
+DISABLE_REGISTRATION = os.getenv("DISABLE_REGISTRATION", "false").lower() == "true"
 
 # CORS setup
 app.add_middleware(
@@ -70,11 +71,33 @@ class UserChangePassword(BaseModel):
 app.include_router(url_router)
 app.include_router(recovery_router)
 
+
+async def _registration_is_open(db: Prisma) -> bool:
+    """Retorna True se o registro está habilitado.
+    Mesmo com DISABLE_REGISTRATION=true, permite o primeiro usuário."""
+    if not DISABLE_REGISTRATION:
+        return True
+    count = await db.user.count()
+    return count == 0
+
+
+@app.get("/auth/can-register", tags=["Auth"])
+async def can_register(db: Prisma = Depends(get_db)):
+    """Informa se o cadastro de novos usuários está habilitado."""
+    return {"register": await _registration_is_open(db)}
+
 # --- Rotas de Autenticação ---
 
 @app.post("/register", status_code=status.HTTP_201_CREATED, tags=["Auth"])
 async def register(response: Response, user_data: UserRegister, db: Prisma = Depends(get_db)):
     """Cria um novo usuário e faz login automático."""
+    # Verificar se registro está habilitado
+    if not await _registration_is_open(db):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Registro de usuários está desabilitado"
+        )
+
     # Verificar reCAPTCHA
     await verify_captcha(user_data.captcha_token)
     

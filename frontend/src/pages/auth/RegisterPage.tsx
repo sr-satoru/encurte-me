@@ -1,8 +1,9 @@
-import { useState, FormEvent, useCallback } from 'react'
+import { useState, FormEvent, useCallback, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCaptcha } from '../../hooks/useRecaptcha'
+import { apiFetch } from '../../api/auth'
 
 export default function RegisterPage() {
     const { register } = useAuth()
@@ -14,13 +15,21 @@ export default function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const [canRegister, setCanRegister] = useState<boolean | null>(null)
     const { renderWidget, execute: executeCaptcha } = useCaptcha()
+
+    useEffect(() => {
+        apiFetch('/auth/can-register')
+            .then((data: { register: boolean }) => setCanRegister(data.register))
+            .catch(() => setCanRegister(true)) // em caso de erro, permite (fail-open)
+    }, [])
 
     const captchaRef = useCallback((node: HTMLDivElement | null) => {
         if (node) renderWidget(node)
     }, [renderWidget])
 
     const handleSubmit = async (e: FormEvent) => {
+
         e.preventDefault()
 
         if (password !== confirmPassword) {
@@ -42,6 +51,37 @@ export default function RegisterPage() {
         } finally {
             setIsLoading(false)
         }
+    }
+
+    // Enquanto verifica se o registro está habilitado
+    if (canRegister === null) {
+        return (
+            <div className="auth-form-container">
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+                    <span className="spinner" style={{ width: 32, height: 32 }}></span>
+                </div>
+            </div>
+        )
+    }
+
+    // Registro desabilitado pelo administrador
+    if (canRegister === false) {
+        return (
+            <div className="auth-form-container">
+                <h2 className="auth-form-title">Registro desabilitado</h2>
+                <p className="auth-form-subtitle">
+                    O cadastro de novos usuários está desabilitado no momento.
+                </p>
+                <div className="auth-alternative" style={{ marginTop: '1.5rem' }}>
+                    <p className="text-secondary">
+                        Já tem uma conta?{' '}
+                        <Link to="/auth/login" className="link-text link-primary">
+                            Fazer login
+                        </Link>
+                    </p>
+                </div>
+            </div>
+        )
     }
 
     return (
