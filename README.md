@@ -1,11 +1,30 @@
-# Redirecionador Web 🚀
+<div align="center">
 
-Sistema profissional de encurtamento de URLs com analytics, autenticação e arquitetura escalável (inspirado no padrão Superpostiz).
+# 🔗 Encurte.me
 
-## 🛠️ Tecnologias
-- **Backend:** FastAPI (Python), Prisma ORM, Redis.
-- **Frontend:** React + Vite, TypeScript.
-- **Proxy/Produção:** Nginx.
+### Sistema profissional de encurtamento de URLs
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)
+![Nginx](https://img.shields.io/badge/Nginx-009639?logo=nginx&logoColor=white)
+
+*Encurtamento de URLs com analytics, autenticação e arquitetura escalável — inspirado no padrão Superpostiz.*
+
+</div>
+
+---
+
+## 🛠️ Stack
+
+| Camada | Tecnologias |
+|---|---|
+| **Backend** | FastAPI (Python), Prisma ORM, Redis |
+| **Frontend** | React + Vite, TypeScript |
+| **Produção** | Nginx, PM2, Certbot/Let's Encrypt |
 
 ---
 
@@ -13,33 +32,28 @@ Sistema profissional de encurtamento de URLs com analytics, autenticação e arq
 
 Escolha o método de instalação de acordo com o seu ambiente.
 
----
-
 ### 💻 Desenvolvimento Local
 
-Para rodar o projeto localmente para testes e modificações:
+Para rodar o projeto localmente para testes e modificações.
 
-#### 1. Pré-requisitos
-Instale o Python 3.10+, Node.js 18+ e o Redis.
+**Pré-requisitos:** Python 3.10+, Node.js 18+ e Redis.
 
-#### 2. Preparando os Serviços
+**1. Iniciar serviços**
 ```bash
-# Iniciar o Redis (configurado no .env)
 bash var/start-redis.sh
 ```
 
-#### 3. Backend (Desenvolvimento)
+**2. Backend**
 ```bash
 cd backend
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-prisma generate
-prisma db push
+prisma generate && prisma db push
 uvicorn src.main:app --reload --port 8303
 ```
 
-#### 4. Frontend (Desenvolvimento)
+**3. Frontend**
 ```bash
 cd frontend
 npm install
@@ -50,56 +64,60 @@ npm run dev
 
 ### 🚀 Deploy em VPS (Produção)
 
-Este é o método recomendado para colocar o sistema no ar de forma estável.
+**1. Nginx & SSL**
 
-#### 1. Proxy e SSL (Nginx)
-Configure o Nginx no seu servidor e gere os certificados SSL (Certbot/Let's Encrypt). Use o modelo fornecido em `var/nginx.conf` como referência.
+Configure o Nginx e gere os certificados SSL com Certbot/Let's Encrypt. Use `var/nginx.conf` como referência.
 
-#### 2. Build do Frontend
+**2. Build do Frontend**
 ```bash
 cd frontend
 npm install
 npm run build
 ```
 
-#### 3. Configuração do Backend
+**3. Backend**
 ```bash
 cd backend
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-prisma generate
-prisma db push
+prisma generate && prisma db push
 ```
 
-#### 4. Variáveis de Ambiente do Backend (.env)
-Crie um arquivo `.env` dentro da pasta `backend/` e configure o caminho **absoluto** do banco de dados SQLite. O backend em produção precisa deste arquivo local para localizar o banco corretamente:
+**4. Variáveis de Ambiente**
 
+Crie o arquivo `backend/.env` com a variável do banco de dados:
 ```env
 DATABASE_URL="file:./dev.db"
 ```
 
-#### 5. Gerenciamento com PM2
-O PM2 manterá os processos ativos e reiniciará o sistema em caso de falhas ou reboot do servidor.
-
+**5. Subir com PM2**
 ```bash
 # Na raiz do projeto
 pm2 start ecosystem.config.js
 ```
 
-**Comandos úteis do PM2:**
-- `pm2 list` (Ver status)
-- `pm2 logs` (Ver logs em tempo real)
-- `pm2 restart encurtador-backend` (Reiniciar backend)
+| Comando | Ação |
+|---|---|
+| `pm2 list` | Ver status dos processos |
+| `pm2 logs` | Logs em tempo real |
+| `pm2 restart encurtador-backend` | Reiniciar o backend |
 
 ---
 
 ## 📖 Documentação da API
 
-O backend gera automaticamente a documentação interativa da API. Com o backend rodando, acesse:
+Com o servidor rodando, acesse a documentação interativa:
 
 - **Swagger UI:** `http://localhost:5173/docs`
 - **ReDoc:** `http://localhost:5173/redoc`
 
 > [!NOTE]
-> No ambiente de desenvolvimento, o Vite faz o proxy de `localhost:5173/api/*` para o backend. Em produção, o Nginx é responsável por encaminhar as requisições `/api` para o serviço FastAPI.
+> Em desenvolvimento, o Vite faz proxy de `localhost:5173/api/*` para o backend.
+> Em produção, o Nginx é responsável por encaminhar as requisições `/api` ao FastAPI.
+
+---
+
+## 📄 Licença
+
+Distribuído sob a licença **MIT**. Veja o arquivo [LICENSE](./LICENSE) para mais detalhes.
