@@ -72,11 +72,11 @@ prisma generate
 prisma db push
 ```
 
-#### 4. Variáveis de Ambiente (.env)
-No arquivo `.env` na raiz do projeto, certifique-se de configurar o caminho **absoluto** do banco de dados SQLite, pois em modo de produção ele pode não localizar o arquivo a partir da raiz:
+#### 4. Variáveis de Ambiente do Backend (.env)
+Crie um arquivo `.env` dentro da pasta `backend/` e configure o caminho **absoluto** do banco de dados SQLite. O backend em produção precisa deste arquivo local para localizar o banco corretamente:
 
 ```env
-DATABASE_URL="file:/caminho/completo/para/o/projeto/backend/prisma/dev.db"
+DATABASE_URL="file:./dev.db"
 ```
 
 #### 5. Gerenciamento com PM2
@@ -98,8 +98,8 @@ pm2 start ecosystem.config.js
 
 O backend gera automaticamente a documentação interativa da API. Com o backend rodando, acesse:
 
-- **Swagger UI:** `http://seu-dominio.com/docs`
-- **ReDoc:** `http://seu-dominio.com/redoc`
+- **Swagger UI:** `http://localhost:5173/docs`
+- **ReDoc:** `http://localhost:5173/redoc`
 
 > [!NOTE]
 > No ambiente de desenvolvimento, o Vite faz o proxy de `localhost:5173/api/*` para o backend. Em produção, o Nginx é responsável por encaminhar as requisições `/api` para o serviço FastAPI.
